@@ -1,10 +1,12 @@
+package tde2;
+
 import org.apache.hadoop.io.Text;
 
 public class Transaction
 {
     private final String[] components;
 
-    Transaction(String transaction)
+    public Transaction(String transaction)
     {
         components = transaction.split(";");
     }
