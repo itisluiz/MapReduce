@@ -36,6 +36,10 @@ public class Job1
         public void map(LongWritable key, Text value, Context con) throws IOException, InterruptedException
         {
             Transaction t = new Transaction(value.toString());
+
+            if (key.get() == 0 && t.isHeader())
+                return;
+
             con.write(new Text(t.getCountry()), new IntWritable(1));
         }
     }

@@ -63,6 +63,11 @@ public class SetupHelper
         job.setMapOutputValueClass(valueType);
     }
 
+    public static <C extends Reducer> void setupCombiner(Job job, Class<C> combiner)
+    {
+        job.setCombinerClass(combiner);
+    }
+
     public static <C extends Reducer, K, V> void setupReducer(Job job, Class<C> reducer, Class<K> keyType, Class<V> valueType)
     {
         job.setReducerClass(reducer);

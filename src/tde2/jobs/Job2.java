@@ -24,7 +24,7 @@ public class Job2
         if (!SetupHelper.setupIO(job, args))
             return;
 
-        job.setJarByClass(Job1.class);
+        job.setJarByClass(Job2.class);
         SetupHelper.setupMapper(job, Map.class, Text.class, IntWritable.class);
         SetupHelper.setupReducer(job, Reduce.class, Text.class, IntWritable.class);
 
@@ -36,6 +36,10 @@ public class Job2
         public void map(LongWritable key, Text value, Context con) throws IOException, InterruptedException
         {
             Transaction t = new Transaction(value.toString());
+
+            if (key.get() == 0 && t.isHeader())
+                return;
+
             // TODO: Implementar lógica mapper
             // con.write( , )
         }

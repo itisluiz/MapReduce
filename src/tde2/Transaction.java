@@ -1,14 +1,29 @@
 package tde2;
 
-import org.apache.hadoop.io.Text;
-
 public class Transaction
 {
     private final String[] components;
 
+    private long parseLongOrZero(String component)
+    {
+        try
+        {
+            return Long.parseLong(component);
+        }
+        catch (NumberFormatException e)
+        {
+            return 0l;
+        }
+    }
+
     public Transaction(String transaction)
     {
         components = transaction.split(";");
+    }
+
+    public boolean isHeader()
+    {
+        return components[0].equals("country_or_area");
     }
 
     public String getCountry()
@@ -16,9 +31,9 @@ public class Transaction
         return components[0];
     }
 
-    public String getYear()
+    public long getYear()
     {
-        return components[1];
+        return parseLongOrZero(components[1]);
     }
 
     public String getCommodityCode()
@@ -36,14 +51,14 @@ public class Transaction
         return components[4];
     }
 
-    public String getPrice()
+    public long getPrice()
     {
-        return components[5];
+        return parseLongOrZero(components[5]);
     }
 
-    public String getWeight()
+    public long getWeight()
     {
-        return components[6];
+        return parseLongOrZero(components[6]);
     }
 
     public String getUnit()
@@ -51,9 +66,9 @@ public class Transaction
         return components[7];
     }
 
-    public String getAmount()
+    public long getAmount()
     {
-        return components[8];
+        return parseLongOrZero(components[8]);
     }
 
     public String getCategory()
