@@ -2,7 +2,7 @@
   <configuration default="false" name="Job2" type="Application" factoryName="Application" nameIsGenerated="true">
     <option name="MAIN_CLASS_NAME" value="tde2.jobs.Job2" />
     <module name="Big Data - TDE 2" />
-    <option name="PROGRAM_PARAMETERS" value="data\in\operacoes_comerciais_inteira.csv data\out\job2" />
+    <option name="PROGRAM_PARAMETERS" value="data/in/operacoes_comerciais_inteira.csv data/out/job2" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="tde2.jobs.*" />
