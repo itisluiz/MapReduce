@@ -41,7 +41,7 @@ public class Job2
                 return;
 
             // TODO: Implementar lógica mapper
-            // con.write( , )
+            con.write(new Text(String.valueOf(t.getYear())), new IntWritable(1));
         }
     }
 
@@ -50,7 +50,12 @@ public class Job2
         public void reduce(Text key, Iterable<IntWritable> values, Context con) throws IOException, InterruptedException
         {
             // TODO: Implementar lógica reducer
-            // con.write( , )
+            int soma = 0;
+
+            for (IntWritable v: values) {
+                soma += v.get();
+            }
+            con.write(key, new IntWritable(soma));
         }
     }
 }
