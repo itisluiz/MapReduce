@@ -50,10 +50,13 @@ public class Job1
         {
             int total = 0;
 
-            for (IntWritable value : values)
-                total += value.get();
+            if (String.valueOf(key).equals("Brazil")) {
+                for (IntWritable value : values)
+                    total += value.get();
 
-            con.write(key, new IntWritable(total));
+                con.write(key, new IntWritable(total));
+            }
+
         }
     }
 }
