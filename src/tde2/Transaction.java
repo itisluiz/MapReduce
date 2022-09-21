@@ -26,6 +26,11 @@ public class Transaction
         return components[0].equals("country_or_area");
     }
 
+    public boolean isValid()
+    {
+        return components.length == 10;
+    }
+
     public String getCountry()
     {
         return components[0];
