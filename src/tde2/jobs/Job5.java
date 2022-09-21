@@ -11,6 +11,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.log4j.BasicConfigurator;
 import tde2.SetupHelper;
 import tde2.Transaction;
+import tde2.customwritable.CompositeKeyWritable;
 
 import java.io.IOException;
 
@@ -26,13 +27,13 @@ public class Job5
             return;
 
         job.setJarByClass(Job5.class);
-        SetupHelper.setupMapper(job, Map.class, Text.class, LongWritable.class);
-        SetupHelper.setupReducer(job, Reduce.class, Text.class, DoubleWritable.class);
+        SetupHelper.setupMapper(job, Map.class, CompositeKeyWritable.class, LongWritable.class);
+        SetupHelper.setupReducer(job, Reduce.class, CompositeKeyWritable.class, DoubleWritable.class);
 
         job.waitForCompletion(true);
     }
 
-    public static class Map extends Mapper<LongWritable, Text, Text, LongWritable>
+    public static class Map extends Mapper<LongWritable, Text, CompositeKeyWritable, LongWritable>
     {
         public void map(LongWritable key, Text value, Context con) throws IOException, InterruptedException
         {
@@ -44,27 +45,24 @@ public class Job5
             if (!t.getFlow().equals("Export") || !t.getCountry().equals("Brazil"))
                 return;
 
-            String compositekey = t.getUnit() + "\t" + t.getYear() + "\t" + t.getCategory();
-
-            con.write(new Text(compositekey), new LongWritable(t.getPrice()));
+            con.write(new CompositeKeyWritable(String.valueOf(t.getYear()), t.getUnit(), t.getCategory()), new LongWritable(t.getPrice()));
         }
     }
 
-    public static class Reduce extends Reducer<Text, LongWritable, Text, DoubleWritable>
+    public static class Reduce extends Reducer<CompositeKeyWritable, LongWritable, CompositeKeyWritable, DoubleWritable>
     {
-        public void reduce(Text key, Iterable<LongWritable> values, Context con) throws IOException, InterruptedException
+        public void reduce(CompositeKeyWritable key, Iterable<LongWritable> values, Context con) throws IOException, InterruptedException
         {
-            long total = 0;
-            int ocorrencias = 0;
+            double total = 0;
+            long ocorrencias = 0;
 
             for (LongWritable value : values)
-            {
+            {x''
                 total += value.get();
                 ++ocorrencias;
             }
 
-            DoubleWritable average = new DoubleWritable(total / (double)ocorrencias);
-            con.write(key, average);
+            con.write(key, new DoubleWritable(total / ocorrencias));
         }
     }
 }
