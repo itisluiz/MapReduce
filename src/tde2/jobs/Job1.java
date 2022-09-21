@@ -37,7 +37,7 @@ public class Job1
         {
             Transaction t = new Transaction(value.toString());
 
-            if (key.get() == 0 && t.isHeader())
+            if (key.get() == 0 && t.isHeader() || !t.isValid())
                 return;
 
             con.write(new Text(t.getCountry()), new IntWritable(1));

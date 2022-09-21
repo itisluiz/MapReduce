@@ -37,7 +37,7 @@ public class Job7
         {
             Transaction t = new Transaction(value.toString());
 
-            if (key.get() == 0 && t.isHeader())
+            if (key.get() == 0 && t.isHeader() || !t.isValid())
                 return;
 
             con.write(new Text(t.getFlow() + " in " + t.getYear()), new IntWritable(1));

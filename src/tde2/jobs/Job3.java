@@ -38,7 +38,7 @@ public class Job3
         {
             Transaction t = new Transaction(value.toString());
 
-            if (key.get() == 0 && t.isHeader())
+            if (key.get() == 0 && t.isHeader() || !t.isValid())
                 return;
 
             if (t.getYear() != 2016)

@@ -37,7 +37,7 @@ public class Job2
         {
             Transaction t = new Transaction(value.toString());
 
-            if (key.get() == 0 && t.isHeader())
+            if (key.get() == 0 && t.isHeader() || !t.isValid())
                 return;
 
             // TODO: Implementar lógica mapper
