@@ -57,7 +57,7 @@ public class Job5
             long ocorrencias = 0;
 
             for (LongWritable value : values)
-            {x''
+            {
                 total += value.get();
                 ++ocorrencias;
             }
