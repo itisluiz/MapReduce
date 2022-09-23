@@ -13,7 +13,18 @@ import java.io.IOException;
 
 public class SetupHelper
 {
-    public static boolean setupIO(Job job, String[] args)
+    /*
+        Permite um número arbitrário de jobs para serem executados em sequência.
+
+        Se 'fresh', então configura o IO para os inputs e outputs passados em args,
+        deletando quaisquer outputs anteriores.
+
+        Se não-'fresh', usa como input o output passado em args, movendo o output
+        anterior de '/part-r-00000' para '/../job-intermediary' contendo este output,
+        livrando o diretório de output para poder ser usado como output novamente.
+     */
+
+    public static boolean setupIO(Job job, String[] args, boolean fresh)
     {
         if (args.length < 2)
         {
@@ -21,14 +32,32 @@ public class SetupHelper
             return false;
         }
 
-        File in = new File(args[0]);
+        File in = new File(fresh ? args[0] : args[1].concat("/../job-intermediary"));
+        File out = new File(args[1]);
+
+        if (!fresh)
+        {
+            File intermediary = new File(args[1].concat("/part-r-00000"));
+
+            if (in.exists() && !in.delete())
+            {
+                System.out.println("Failed to delete '" + in.getAbsolutePath() + "'");
+                return false;
+            }
+
+            if (!intermediary.exists() || !intermediary.renameTo(in))
+            {
+                System.out.println("Failed to move '" + intermediary.getAbsolutePath() + "' to '" + in.getAbsolutePath() + "'");
+                return false;
+            }
+        }
+
         if (!in.exists())
         {
-            System.out.println("Input file '" + args[0] + "' doesn't exist");
+            System.out.println("Input file '" + in.getAbsolutePath() + "' doesn't exist");
             return false;
         }
 
-        File out = new File(args[1]);
         if (out.exists())
         {
             try
@@ -37,9 +66,10 @@ public class SetupHelper
             }
             catch (IOException e)
             {
-                System.out.println("Failed to delete current output files at '" + args[1] + "'");
+                System.out.println("Failed to delete '" + out.getAbsolutePath() + "'");
                 return false;
             }
+
         }
 
         try
@@ -54,6 +84,11 @@ public class SetupHelper
         }
 
         return true;
+    }
+
+    public static boolean setupIO(Job job, String[] args)
+    {
+        return setupIO(job, args, true);
     }
 
     public static <C extends Mapper, K, V> void setupMapper(Job job, Class<C> mapper, Class<K> keyType, Class<V> valueType)
