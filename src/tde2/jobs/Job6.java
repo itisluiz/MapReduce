@@ -1,6 +1,8 @@
 package tde2.jobs;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -13,42 +15,45 @@ import tde2.customwritable.CompositeKeyWritable;
 import tde2.customwritable.KeyedLongWritable;
 
 import java.io.IOException;
+import java.util.*;
 
-// The most commercialized commodity (summing the Amount column) in 2016, per flow type.
-// Objetivo: Obter a relação de commodities mais comercializados em 2016, separados por Flow
-public class Job3
+// Objetivo: Obter a commodity com o maior preço para cada par de tipo de unidade e ano
+
+public class Job6
 {
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException
     {
         BasicConfigurator.configure();
 
-        // Primeira rotina MapReduce
-        Job job_a = Job.getInstance(new Configuration(), "job3_a");
+        // Job A
+        Job job_a = Job.getInstance(new Configuration(), "job6_a");
 
         if (!SetupHelper.setupIO(job_a, args))
             return;
 
-        job_a.setJarByClass(Job3.class);
+        job_a.setJarByClass(Job6.class);
         SetupHelper.setupMapper(job_a, Map_a.class, CompositeKeyWritable.class, LongWritable.class);
         SetupHelper.setupReducer(job_a, Reduce_a.class, CompositeKeyWritable.class, LongWritable.class);
 
         job_a.waitForCompletion(true);
 
-        // Segunda rotina MapReduce
-        Job job_b = Job.getInstance(new Configuration(), "job3_b");
+        // Job B
+        Job job_b = Job.getInstance(new Configuration(), "job6_b");
 
         if (!SetupHelper.setupIO(job_b, args, false))
             return;
 
-        job_b.setJarByClass(Job3.class);
-        SetupHelper.setupMapper(job_b, Map_b.class, Text.class, KeyedLongWritable.class);
-        SetupHelper.setupReducer(job_b, Reduce_b.class, Text.class, KeyedLongWritable.class);
+        job_b.setJarByClass(Job6.class);
+        SetupHelper.setupMapper(job_b, Map_b.class, CompositeKeyWritable.class, KeyedLongWritable.class);
+        SetupHelper.setupReducer(job_b, Reduce_b.class, CompositeKeyWritable.class, KeyedLongWritable.class);
 
         job_b.waitForCompletion(true);
     }
 
+    // Job A
     public static class Map_a extends Mapper<LongWritable, Text, CompositeKeyWritable, LongWritable>
     {
+        // Output: ano, tipo de unidade, commodity: preço transação
         public void map(LongWritable key, Text value, Context con) throws IOException, InterruptedException
         {
             Transaction t = new Transaction(value.toString());
@@ -56,15 +61,13 @@ public class Job3
             if (key.get() == 0 && t.isHeader() || !t.isValid())
                 return;
 
-            if (t.getYear() != 2016)
-                return;
-
-            con.write(new CompositeKeyWritable(t.getFlow(), t.getCommodity()), new LongWritable(t.getAmount()));
+            con.write(new CompositeKeyWritable(String.valueOf(t.getYear()), t.getUnit(), t.getCommodity()), new LongWritable(t.getPrice()));
         }
     }
 
     public static class Reduce_a extends Reducer<CompositeKeyWritable, LongWritable, CompositeKeyWritable, LongWritable>
     {
+        // Output: ano, tipo de unidade, commodity: preço total
         public void reduce(CompositeKeyWritable key, Iterable<LongWritable> values, Context con) throws IOException, InterruptedException
         {
             long total = 0;
@@ -76,33 +79,34 @@ public class Job3
         }
     }
 
-    public static class Map_b extends Mapper<LongWritable, Text, Text, KeyedLongWritable>
+    // Job B
+    public static class Map_b extends Mapper<LongWritable, Text, CompositeKeyWritable, KeyedLongWritable>
     {
+        // Output: ano, tipo de unidade: commodity, preço total
         public void map(LongWritable key, Text value, Context con) throws IOException, InterruptedException
         {
-            String linha = value.toString();
-            String[] linhas = linha.split("\t");
+            String[] components = value.toString().split("\t");
 
-            String flow = linhas[0];
-            String commodity = linhas[1];
-            long soma = Long.parseLong(linhas[2]);
+            CompositeKeyWritable yearUnitytype = new CompositeKeyWritable(components[0], components[1]);
+            KeyedLongWritable commodityPrice = new KeyedLongWritable(components[2], Long.parseLong(components[3]));
 
-            con.write(new Text(flow), new KeyedLongWritable(commodity, soma));
+            con.write(yearUnitytype, commodityPrice);
         }
     }
 
-    public static class Reduce_b extends Reducer<Text, KeyedLongWritable, Text, KeyedLongWritable>
+    public static class Reduce_b extends Reducer<CompositeKeyWritable, KeyedLongWritable, CompositeKeyWritable, KeyedLongWritable>
     {
-        public void reduce(Text key, Iterable<KeyedLongWritable> values, Context con) throws IOException, InterruptedException
+        // Output: ano, tipo de unidade: commodity, preço total [Somente do maior preço total referente à chave]
+        public void reduce(CompositeKeyWritable key, Iterable<KeyedLongWritable> values, Context con) throws IOException, InterruptedException
         {
             KeyedLongWritable max = null;
-
             for (KeyedLongWritable value : values)
-                if (max == null || value.getValue() > max.getValue())
+            {
+                if (max == null || max.getValue() < value.getValue())
                     max = value;
+            }
 
-            con.write(key,max);
+            con.write(key, max);
         }
     }
-
 }

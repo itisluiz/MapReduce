@@ -12,7 +12,7 @@ import tde2.Transaction;
 
 import java.io.IOException;
 
-// Objetivo: Obter a relação de número de transações envolvendo cada país.
+// Objetivo: Obter a relação de número de transações envolvendo o Brasil.
 public class Job1
 {
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException
