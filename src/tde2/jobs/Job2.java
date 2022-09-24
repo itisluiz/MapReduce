@@ -40,7 +40,6 @@ public class Job2
             if (key.get() == 0 && t.isHeader() || !t.isValid())
                 return;
 
-            // TODO: Implementar lógica mapper
             con.write(new Text(String.valueOf(t.getYear())), new IntWritable(1));
         }
     }
@@ -49,7 +48,6 @@ public class Job2
     {
         public void reduce(Text key, Iterable<IntWritable> values, Context con) throws IOException, InterruptedException
         {
-            // TODO: Implementar lógica reducer
             int soma = 0;
 
             for (IntWritable v: values) {

@@ -1,9 +1,7 @@
 package tde2.jobs;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -12,7 +10,7 @@ import org.apache.log4j.BasicConfigurator;
 import tde2.SetupHelper;
 import tde2.Transaction;
 import tde2.customwritable.CompositeKeyWritable;
-import tde2.customwritable.Job3Writable;
+import tde2.customwritable.KeyedLongWritable;
 
 import java.io.IOException;
 
@@ -31,8 +29,8 @@ public class Job3
             return;
 
         job_a.setJarByClass(Job3.class);
-        SetupHelper.setupMapper(job_a, Map.class, CompositeKeyWritable.class, LongWritable.class);
-        SetupHelper.setupReducer(job_a, Reduce.class, CompositeKeyWritable.class, LongWritable.class);
+        SetupHelper.setupMapper(job_a, Map_a.class, CompositeKeyWritable.class, LongWritable.class);
+        SetupHelper.setupReducer(job_a, Reduce_a.class, CompositeKeyWritable.class, LongWritable.class);
 
         job_a.waitForCompletion(true);
 
@@ -43,13 +41,13 @@ public class Job3
             return;
 
         job_b.setJarByClass(Job3.class);
-        SetupHelper.setupMapper(job_b, Map2.class, Text.class, Job3Writable.class);
-        SetupHelper.setupReducer(job_b, Reduce2.class, Text.class, Job3Writable.class);
+        SetupHelper.setupMapper(job_b, Map_b.class, Text.class, KeyedLongWritable.class);
+        SetupHelper.setupReducer(job_b, Reduce_b.class, Text.class, KeyedLongWritable.class);
 
         job_b.waitForCompletion(true);
     }
 
-    public static class Map extends Mapper<LongWritable, Text, CompositeKeyWritable, LongWritable>
+    public static class Map_a extends Mapper<LongWritable, Text, CompositeKeyWritable, LongWritable>
     {
         public void map(LongWritable key, Text value, Context con) throws IOException, InterruptedException
         {
@@ -61,12 +59,11 @@ public class Job3
             if (t.getYear() != 2016)
                 return;
 
-            //con.write(new Text(t.getCommodity() + "\t" + t.getFlow()), new LongWritable(t.getAmount()));
             con.write(new CompositeKeyWritable(t.getFlow(), t.getCommodity()), new LongWritable(t.getAmount()));
         }
     }
 
-    public static class Reduce extends Reducer<CompositeKeyWritable, LongWritable, CompositeKeyWritable, LongWritable>
+    public static class Reduce_a extends Reducer<CompositeKeyWritable, LongWritable, CompositeKeyWritable, LongWritable>
     {
         public void reduce(CompositeKeyWritable key, Iterable<LongWritable> values, Context con) throws IOException, InterruptedException
         {
@@ -79,7 +76,7 @@ public class Job3
         }
     }
 
-    public static class Map2 extends Mapper<LongWritable, Text, Text, Job3Writable>
+    public static class Map_b extends Mapper<LongWritable, Text, Text, KeyedLongWritable>
     {
         public void map(LongWritable key, Text value, Context con) throws IOException, InterruptedException
         {
@@ -90,24 +87,22 @@ public class Job3
             String commodity = linhas[1];
             long soma = Long.parseLong(linhas[2]);
 
-            con.write(new Text(flow), new Job3Writable(commodity,soma));
+            con.write(new Text(flow), new KeyedLongWritable(commodity, soma));
         }
     }
 
-    public static class Reduce2 extends Reducer<Text, Job3Writable, Text, Job3Writable>
+    public static class Reduce_b extends Reducer<Text, KeyedLongWritable, Text, KeyedLongWritable>
     {
-        public void reduce(Text key, Iterable<Job3Writable> values, Context con) throws IOException, InterruptedException
+        public void reduce(Text key, Iterable<KeyedLongWritable> values, Context con) throws IOException, InterruptedException
         {
-            Job3Writable max = null;
+            KeyedLongWritable max = null;
 
-            for (Job3Writable value : values)
-                if (max == null || value.getSoma() > max.getSoma())
+            for (KeyedLongWritable value : values)
+                if (max == null || value.getValue() > max.getValue())
                     max = value;
 
             con.write(key,max);
         }
     }
-
-
 
 }
